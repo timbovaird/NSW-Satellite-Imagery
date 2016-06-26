@@ -60,6 +60,9 @@ class NswSatelliteImages:
         upper-left and lower-right tiles in the APIs Z/X/Y format.
         """
 
+    def download_tile(self):
+        """Download an individual tile."""
+
 if __name__ == '__main__':
     # Set parameters
     Parameters = namedtuple('Parameters', 'zoom_level latitude_bounds longitude_bounds')

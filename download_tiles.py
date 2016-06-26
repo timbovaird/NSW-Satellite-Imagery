@@ -9,6 +9,9 @@ To Do:
 from collections import namedtuple
 import json
 import neobunch
+import png
+import requests
+import shutil
 from pprint import pprint
 
 
@@ -20,6 +23,7 @@ def main(parameters):
     print('Zoom level:', image_api.zoom_level,
           'Resolution:', image_api.resolution,
           'Scale:', image_api.scale)
+    image_api.download_tile(xtile=39000, ytile=60000)
 
 
 def get_metadata(parameters):
@@ -39,6 +43,7 @@ class NswSatelliteImages:
         self.zoom_level = parameters.zoom_level
         self.latitude_bounds = parameters.latitude_bounds
         self.longitude_bounds = parameters.longitude_bounds
+        self.num_tiles_saved = 0
         self.set_tile_parameters(metadata)
 
     def set_tile_parameters(self, metadata):
@@ -60,13 +65,25 @@ class NswSatelliteImages:
         upper-left and lower-right tiles in the APIs Z/X/Y format.
         """
 
-    def download_tile(self):
+    def download_tile(self, xtile, ytile):
         """Download an individual tile."""
+        location = 'http://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/'
+        destination = 'downloaded_tiles/'
+        save_name = str(self.zoom_level) + '_' + str(xtile) + '_' + str(ytile)
+        tile_url = location + save_name.replace('_', '/')
+        tile = requests.get(tile_url, stream=True)
+        with open(destination + save_name + '.png', 'wb') as out_file:
+            tile.raw.decode_content = True
+            shutil.copyfileobj(tile.raw, out_file)
+            tilepng = png.Reader(file=tile.raw)
+            # shutil.copyfileobj(tilepng, out_file)
+        del tile
+
 
 if __name__ == '__main__':
     # Set parameters
     Parameters = namedtuple('Parameters', 'zoom_level latitude_bounds longitude_bounds')
-    parameters = Parameters(zoom_level=14,
+    parameters = Parameters(zoom_level=16,
                             latitude_bounds=(-35.258028, -35.333125),  # Canberra CBD
                             longitude_bounds=(149.085308, 149.175259))  # Canberra CBD
     main(parameters)
